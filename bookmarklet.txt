@@ -1,1 +1,1 @@
-javascript:(function(d,s){s=d.createElement('script');s.src='https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@main/wlw-bookmarklet.js';d.body.appendChild(s);})(document)
+javascript:(function(d){var a=d.createElement('script');a.src='https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@main/wlw-bookmarklet.js';a.onload=function(){var b=d.createElement('script');b.src='https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@main/wlw-export.js';d.body.appendChild(b)};d.body.appendChild(a)})(document)
