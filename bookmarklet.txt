@@ -1,0 +1,1 @@
+javascript:(function(d,s){s=d.createElement('script');s.src='https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@main/wlw-bookmarklet.js';d.body.appendChild(s);})(document)
