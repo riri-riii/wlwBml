@@ -8,6 +8,7 @@ void (function () {
 
     const CORE_URL = "https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@a9a8ee750f0f0c55a82866976a353ed77019cb4e/wlw-bookmarklet.js";
     const FALLBACK_BASE = "https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@main/";
+    const STORAGE_KEY = "wlw_bookmarklet_05";
     const currentScriptUrl = document.currentScript?.src || "";
     const baseUrl = /\/wlw-bookmarklet\.js(?:[?#].*)?$/.test(currentScriptUrl)
         ? currentScriptUrl.replace(/wlw-bookmarklet\.js(?:[?#].*)?$/, "")
@@ -23,7 +24,24 @@ void (function () {
     if (location.hostname === "wonderland-wars.net" && location.pathname === "/castdetail.html") {
         showModeDialog();
     } else {
+        if (location.hostname === "wonderland-wars.net" && location.pathname === "/mycast.html") {
+            resetStoredBattleData();
+        }
         runFull();
+    }
+
+    function resetStoredBattleData() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const state = JSON.parse(raw);
+            if (!state || typeof state !== "object") return;
+            state.data = {};
+            state.previous = {};
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.warn("WLW戦績データのリセットに失敗しました。", error);
+        }
     }
 
     function runFull() {
