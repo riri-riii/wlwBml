@@ -1,7 +1,6 @@
 /*
- * WLWキャスト表示選択_01
- * 画像出力を廃止し、キャスト別勝率の表示行だけを切り替える。
- * 既存ブックマークとの互換性のためファイル名はwlw-export.jsを維持。
+ * WLWキャスト表示選択_02
+ * キャスト別勝率の表示行を選択する。初期表示はCR1以上のみ。
  */
 void (function () {
     if (location.hostname !== "wonderland-wars.net" || location.pathname !== "/castdetail.html") return;
@@ -12,7 +11,6 @@ void (function () {
     const UI_ID = "wlw_cast_select_ui";
     let selectedIds = null;
 
-    // 一括取得が長くかかっても、表示完了を待ってボタンを追加する。
     const observer = new MutationObserver(() => {
         if (mount()) observer.disconnect();
     });
@@ -36,7 +34,12 @@ void (function () {
         if (document.getElementById(BUTTON_ID)) return true;
         const casts = getCasts();
         if (!casts.length) return false;
-        selectedIds = new Set(casts.map(cast => cast.id));
+
+        selectedIds = new Set(
+            casts.filter(cast => cast.rank !== null && cast.rank >= 1).map(cast => cast.id)
+        );
+        applySelection(casts);
+
         document.getElementById("wlw_export_button")?.remove();
         document.getElementById("wlw_export_ui")?.remove();
 
@@ -47,6 +50,13 @@ void (function () {
         button.addEventListener("click", () => openPanel(button));
         document.body.appendChild(button);
         return true;
+    }
+
+    function applySelection(casts) {
+        for (const cast of casts) {
+            if (selectedIds.has(cast.id)) cast.row.style.removeProperty("display");
+            else cast.row.style.setProperty("display", "none", "important");
+        }
     }
 
     function element(tag, text, css) {
@@ -83,7 +93,7 @@ void (function () {
         title.id = "wlw_cast_select_title";
         const help = element("div", "表示したいキャストにチェックを入れ、OKで反映します。", "margin-bottom:10px");
         const toolbar = element("div", null, "display:flex;gap:8px;margin-bottom:10px");
-        const toggleAll = makeButton("全解除", false);
+        const toggleAll = makeButton("全選択", false);
         toolbar.append(toggleAll);
         const status = element("div", "", "margin:6px 0;font-size:13px");
         status.setAttribute("role", "status");
@@ -92,6 +102,7 @@ void (function () {
         const list = element("div", null,
             "max-height:38vh;overflow:auto;overscroll-behavior:contain;border:1px solid #ddd;border-radius:6px");
         const boxes = new Map();
+
         for (const cast of casts) {
             const label = element("label", null,
                 "display:flex;align-items:center;gap:10px;padding:9px 10px;min-height:44px;" +
@@ -123,6 +134,7 @@ void (function () {
             message.textContent = "";
             updateCount();
         }
+
         toggleAll.addEventListener("click", () => {
             const allSelected = Array.from(boxes.values()).every(box => box.checked);
             selectWhere(() => !allSelected);
@@ -159,27 +171,13 @@ void (function () {
         footer.append(cancel, ok);
         ok.addEventListener("click", () => {
             selectedIds = new Set(casts.filter(cast => boxes.get(cast.id).checked).map(cast => cast.id));
-            for (const cast of casts) {
-                // 全キャスト勝率や現在の詳細戦績は変更せず、キャスト別の行だけ切り替える。
-                if (selectedIds.has(cast.id)) cast.row.style.removeProperty("display");
-                else cast.row.style.setProperty("display", "none", "important");
-            }
+            applySelection(casts);
             close();
         });
         cancel.addEventListener("click", close);
         overlay.addEventListener("click", event => { if (event.target === overlay) close(); });
         panel.addEventListener("keydown", event => {
             if (event.key === "Escape") { event.preventDefault(); close(); }
-            if (event.key === "Tab") {
-                const focusable = Array.from(panel.querySelectorAll("button,input"));
-                const first = focusable[0];
-                const last = focusable[focusable.length - 1];
-                if (event.shiftKey && (document.activeElement === first || document.activeElement === panel)) {
-                    event.preventDefault(); last.focus();
-                } else if (!event.shiftKey && document.activeElement === last) {
-                    event.preventDefault(); first.focus();
-                }
-            }
         });
         const oldOverflow = document.body.style.overflow;
         function close() {
