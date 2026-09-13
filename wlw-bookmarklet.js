@@ -1,5 +1,6 @@
 /*
- * WLWブックマークレット_05
+ * WLWブックマークレット_06
+ * キャスト表示選択用にランクと各行のキャストIDを追加。
  * 保存先をCookieからlocalStorageへ変更。
  * 全キャスト取得は非表示iframe内で「マイキャスト → キャスト詳細」と通常遷移させる。
  * 原作：syara-temp / plz-monoeye-cast
@@ -68,15 +69,19 @@ void (async function () {
         }
 
         const currentData = readCastData(document);
+        const currentRank = readCastRank(document);
 
         readerFrame = await openReaderFrame();
         const fetched = await collectOtherCasts(roster, currentId);
 
         // 全キャスト取得に成功してから保存する。
+        state.ranks ||= {};
         for (const entry of fetched) {
             updateCastState(state, entry.id, entry.data);
+            state.ranks[entry.id] = entry.rank;
         }
         const baseline = updateCastState(state, currentId, currentData);
+        state.ranks[currentId] = currentRank;
 
         state.roster = roster;
         saveState(state);
@@ -327,6 +332,27 @@ void (async function () {
         return data;
     }
 
+    // ランク表示の元値を読む。画像生成スクリプトを実行せず、取得できなければnull。
+    function readCastRank(source) {
+        const node = source.querySelector(".data_castrank");
+        if (!node) return null;
+        for (const script of node.querySelectorAll("script")) {
+            const match = script.textContent.match(
+                /\bpoint_num\s*\(\s*(['"])(\d+)\1\s*,\s*['"][^'"]*num_castrank['"]/
+            );
+            if (match) return Number(match[2]);
+        }
+        const digits = Array.from(node.querySelectorAll("img[src]"), image => {
+            const match = image.getAttribute("src").match(/(?:^|\/)num_castrank(\d)\.png(?:[?#]|$)/);
+            return match ? match[1] : "";
+        }).join("");
+        if (digits) return Number(digits);
+        const copy = node.cloneNode(true);
+        copy.querySelectorAll("script,style").forEach(element => element.remove());
+        const match = copy.textContent.normalize("NFKC").trim().match(/^(?:CR\s*)?(\d+)$/i);
+        return match ? Number(match[1]) : null;
+    }
+
     function showProgress(text) {
         if (!progress) {
             progress = document.createElement("div");
@@ -441,7 +467,7 @@ void (async function () {
         let lastError = null;
         while (Date.now() - started < 3000) {
             try {
-                return readCastData(castDoc);
+                return { data: readCastData(castDoc), rank: readCastRank(castDoc) };
             } catch (error) {
                 lastError = error;
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -473,7 +499,8 @@ void (async function () {
             );
 
             try {
-                fetched.push({ id, data: await fetchCastInFrame(id) });
+                const result = await fetchCastInFrame(id);
+                fetched.push({ id, data: result.data, rank: result.rank });
             } catch (error) {
                 throw new Error(
                     "一括取得を中止しました。\n" +
@@ -572,6 +599,7 @@ void (async function () {
             divs[0].innerHTML = title;
             divs[1].innerHTML = value;
             copy.insertBefore(row, blocks[index]);
+            return row;
         }
 
         insert(2, "敗北数", currentData[3] + '<span class="font_small">敗</span>');
@@ -606,13 +634,16 @@ void (async function () {
 
         for (let i = 0; i < roster.ids.length; i++) {
             const id = roster.ids[i];
-            if (wins[id] + losses[id] <= 0) continue;
-            insert(
+            const row = insert(
                 6,
                 '<span class="font_90">' + roster.names[i] + "</span>",
                 rates[id] + '% <span class="font_small">(' +
                 wins[id] + "勝" + losses[id] + "敗)</span>"
             );
+            row.dataset.wlwCastId = id;
+            row.dataset.wlwCastName = roster.names[i];
+            row.dataset.wlwWins = String(wins[id]);
+            row.dataset.wlwRank = state.ranks?.[id] == null ? "" : String(state.ranks[id]);
         }
 
         frame.parentNode.replaceChild(copy, frame);
