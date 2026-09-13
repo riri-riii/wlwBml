@@ -332,25 +332,26 @@ void (async function () {
         return data;
     }
 
-    // ランク表示の元値を読む。画像生成スクリプトを実行せず、取得できなければnull。
+    // 背景クラスがbg_castrank4のときだけ30を加え、比較用のCR換算値を読む。画像生成スクリプトを実行せず、取得できなければnull。
     function readCastRank(source) {
         const node = source.querySelector(".data_castrank");
         if (!node) return null;
+        const offset = node.classList.contains("bg_castrank4") ? 30 : 0;
         for (const script of node.querySelectorAll("script")) {
             const match = script.textContent.match(
                 /\bpoint_num\s*\(\s*(['"])(\d+)\1\s*,\s*['"][^'"]*num_castrank['"]/
             );
-            if (match) return Number(match[2]);
+            if (match) return Number(match[2]) + offset;
         }
         const digits = Array.from(node.querySelectorAll("img[src]"), image => {
             const match = image.getAttribute("src").match(/(?:^|\/)num_castrank(\d)\.png(?:[?#]|$)/);
             return match ? match[1] : "";
         }).join("");
-        if (digits) return Number(digits);
+        if (digits) return Number(digits) + offset;
         const copy = node.cloneNode(true);
         copy.querySelectorAll("script,style").forEach(element => element.remove());
         const match = copy.textContent.normalize("NFKC").trim().match(/^(?:CR\s*)?(\d+)$/i);
-        return match ? Number(match[1]) : null;
+        return match ? Number(match[1]) + offset : null;
     }
 
     function showProgress(text) {
