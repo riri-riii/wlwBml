@@ -19,6 +19,7 @@ void (function () {
         "保存先をlocalStorageへ変更しました。",
         "戦績はlocalStorageに保存しました。"
     ]);
+    let deferredListCompletion = null;
 
     if (location.hostname === "wonderland-wars.net" && location.pathname === "/castdetail.html") {
         showModeDialog();
@@ -29,7 +30,12 @@ void (function () {
     function runFull() {
         installMessageFilter();
         loadScript(CORE_URL, function () {
-            waitForFinish(restoreMessageFilter);
+            waitForFinish(function () {
+                restoreMessageFilter();
+                if (location.hostname === "wonderland-wars.net" && location.pathname === "/mycast.html") {
+                    showListCompletion();
+                }
+            });
         }, function () {
             restoreMessageFilter();
             originalAlert.call(window, "WLWブックマークレット本体の読み込みに失敗しました。");
@@ -107,7 +113,13 @@ void (function () {
                 .split("\n")
                 .filter(line => !removedLines.has(line))
                 .join("\n");
-            if (filtered) originalAlert.call(window, filtered);
+            if (!filtered) return;
+
+            if (location.pathname === "/mycast.html" && filtered.includes("獲得済みキャスト情報取得が完了しました。")) {
+                deferredListCompletion = filtered;
+                return;
+            }
+            originalAlert.call(window, filtered);
         };
 
         progressObserver = new MutationObserver(cleanProgress);
@@ -131,6 +143,45 @@ void (function () {
         if (messageFilterInstalled) window.alert = originalAlert;
         messageFilterInstalled = false;
         finishLoader();
+    }
+
+    function showListCompletion() {
+        const old = document.getElementById("wlw_list_complete_ui");
+        if (old) old.remove();
+
+        let message = deferredListCompletion;
+        deferredListCompletion = null;
+
+        if (!message) {
+            try {
+                const raw = localStorage.getItem("wlw_bookmarklet_05");
+                const state = raw ? JSON.parse(raw) : null;
+                const count = Array.isArray(state?.roster?.ids) ? state.roster.ids.length : null;
+                message = "獲得済みキャスト情報取得が完了しました。" +
+                    (count != null ? "\n獲得済みキャスト数：" + count : "");
+            } catch (_) {
+                message = "獲得済みキャスト情報取得が完了しました。";
+            }
+        }
+
+        const overlay = document.createElement("div");
+        overlay.id = "wlw_list_complete_ui";
+        overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#0008;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box";
+
+        const panel = document.createElement("div");
+        panel.style.cssText = "width:100%;max-width:360px;background:#fff;color:#111;border-radius:10px;padding:16px;box-sizing:border-box;font:14px/1.6 sans-serif;box-shadow:0 8px 30px #0005;white-space:pre-line";
+
+        const text = document.createElement("div");
+        text.textContent = message;
+        text.style.cssText = "margin-bottom:12px";
+
+        const ok = makeButton("OK", true);
+        ok.style.width = "100%";
+        ok.addEventListener("click", function () { overlay.remove(); });
+
+        panel.append(text, ok);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
     }
 
     function waitForFinish(done) {
