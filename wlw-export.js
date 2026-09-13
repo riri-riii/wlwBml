@@ -58,8 +58,8 @@ void (function () {
 
     function makeButton(text, primary) {
         const button = element("button", text,
-            "padding:10px 12px;min-height:42px;border:1px solid #999;border-radius:6px;" +
-            "font:600 14px sans-serif;cursor:pointer;box-sizing:border-box;" +
+            "padding:8px 10px;min-height:36px;border:1px solid #999;border-radius:6px;" +
+            "font:600 13px sans-serif;cursor:pointer;box-sizing:border-box;" +
             (primary ? "background:#202632;color:#fff" : "background:#fff;color:#111"));
         button.type = "button";
         return button;
