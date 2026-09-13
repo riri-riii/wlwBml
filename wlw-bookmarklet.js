@@ -48,42 +48,11 @@ void (function () {
     function runFull() {
         installMessageFilter();
         loadScript(CORE_URL, function () {
-            if (isMyCastPage) showRosterCompleteMessage();
             waitForFinish(restoreMessageFilter);
         }, function () {
             restoreMessageFilter();
             originalAlert.call(window, "WLWブックマークレット本体の読み込みに失敗しました。");
         });
-    }
-
-    function showRosterCompleteMessage() {
-        let count = null;
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                const state = JSON.parse(raw);
-                if (Array.isArray(state?.roster?.ids)) count = state.roster.ids.length;
-            }
-        } catch (_) {}
-
-        document.getElementById("wlw_roster_complete_ui")?.remove();
-        const overlay = document.createElement("div");
-        overlay.id = "wlw_roster_complete_ui";
-        overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#0008;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box";
-
-        const panel = document.createElement("div");
-        panel.style.cssText = "width:100%;max-width:340px;background:#fff;color:#111;border-radius:10px;padding:16px;box-sizing:border-box;font:14px/1.5 sans-serif;box-shadow:0 8px 30px #0005;text-align:center";
-
-        const message = document.createElement("div");
-        message.textContent = "獲得済みキャスト情報取得が完了しました。" +
-            (count == null ? "" : "\n獲得済みキャスト数：" + count);
-        message.style.cssText = "white-space:pre-line;margin-bottom:12px";
-
-        const ok = makeButton("OK", true);
-        ok.addEventListener("click", function () { overlay.remove(); });
-        panel.append(message, ok);
-        overlay.appendChild(panel);
-        document.body.appendChild(overlay);
     }
 
     function runCurrentOnly() {
@@ -154,7 +123,17 @@ void (function () {
         messageFilterInstalled = true;
         window.alert = function (message) {
             const text = String(message);
-            if (isMyCastPage && text.includes("獲得済みキャスト情報取得が完了しました。")) return;
+
+            if (isMyCastPage && text.includes("獲得済みキャスト情報取得が完了しました。")) {
+                const countLine = text.split("\n").find(line => line.startsWith("獲得済みキャスト数："));
+                originalAlert.call(
+                    window,
+                    "獲得済みキャスト情報取得が完了しました。" +
+                    (countLine ? "\n" + countLine : "")
+                );
+                return;
+            }
+
             const filtered = text
                 .split("\n")
                 .filter(line => !removedLines.has(line))
