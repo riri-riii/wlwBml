@@ -20,38 +20,70 @@ void (function () {
         "保存先をlocalStorageへ変更しました。",
         "戦績はlocalStorageに保存しました。"
     ]);
+    const isMyCastPage = location.hostname === "wonderland-wars.net" && location.pathname === "/mycast.html";
 
     if (location.hostname === "wonderland-wars.net" && location.pathname === "/castdetail.html") {
         showModeDialog();
     } else {
-        if (location.hostname === "wonderland-wars.net" && location.pathname === "/mycast.html") {
-            resetStoredBattleData();
-        }
+        if (isMyCastPage) resetStoredData();
         runFull();
     }
 
-    function resetStoredBattleData() {
+    function resetStoredData() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return;
             const state = JSON.parse(raw);
             if (!state || typeof state !== "object") return;
+            state.roster = { ids: [], names: [] };
             state.data = {};
             state.previous = {};
+            state.ranks = {};
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (error) {
-            console.warn("WLW戦績データのリセットに失敗しました。", error);
+            console.warn("WLW保存データのリセットに失敗しました。", error);
         }
     }
 
     function runFull() {
         installMessageFilter();
         loadScript(CORE_URL, function () {
+            if (isMyCastPage) showRosterCompleteMessage();
             waitForFinish(restoreMessageFilter);
         }, function () {
             restoreMessageFilter();
             originalAlert.call(window, "WLWブックマークレット本体の読み込みに失敗しました。");
         });
+    }
+
+    function showRosterCompleteMessage() {
+        let count = null;
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const state = JSON.parse(raw);
+                if (Array.isArray(state?.roster?.ids)) count = state.roster.ids.length;
+            }
+        } catch (_) {}
+
+        document.getElementById("wlw_roster_complete_ui")?.remove();
+        const overlay = document.createElement("div");
+        overlay.id = "wlw_roster_complete_ui";
+        overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#0008;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box";
+
+        const panel = document.createElement("div");
+        panel.style.cssText = "width:100%;max-width:340px;background:#fff;color:#111;border-radius:10px;padding:16px;box-sizing:border-box;font:14px/1.5 sans-serif;box-shadow:0 8px 30px #0005;text-align:center";
+
+        const message = document.createElement("div");
+        message.textContent = "獲得済みキャスト情報取得が完了しました。" +
+            (count == null ? "" : "\n獲得済みキャスト数：" + count);
+        message.style.cssText = "white-space:pre-line;margin-bottom:12px";
+
+        const ok = makeButton("OK", true);
+        ok.addEventListener("click", function () { overlay.remove(); });
+        panel.append(message, ok);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
     }
 
     function runCurrentOnly() {
@@ -121,7 +153,9 @@ void (function () {
         if (messageFilterInstalled) return;
         messageFilterInstalled = true;
         window.alert = function (message) {
-            const filtered = String(message)
+            const text = String(message);
+            if (isMyCastPage && text.includes("獲得済みキャスト情報取得が完了しました。")) return;
+            const filtered = text
                 .split("\n")
                 .filter(line => !removedLines.has(line))
                 .join("\n");
