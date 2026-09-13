@@ -83,9 +83,8 @@ void (function () {
         title.id = "wlw_cast_select_title";
         const help = element("div", "表示したいキャストにチェックを入れ、OKで反映します。", "margin-bottom:10px");
         const toolbar = element("div", null, "display:flex;gap:8px;margin-bottom:10px");
-        const all = makeButton("全選択", false);
-        const none = makeButton("全解除", false);
-        toolbar.append(all, none);
+        const toggleAll = makeButton("全解除", false);
+        toolbar.append(toggleAll);
         const status = element("div", "", "margin:6px 0;font-size:13px");
         status.setAttribute("role", "status");
         const message = element("div", "", "color:#b42318;font-size:13px;white-space:pre-line");
@@ -116,6 +115,7 @@ void (function () {
         function updateCount() {
             const count = Array.from(boxes.values()).filter(box => box.checked).length;
             status.textContent = count + " / " + casts.length + "キャストを選択";
+            toggleAll.textContent = count === casts.length ? "全解除" : "全選択";
         }
 
         function selectWhere(predicate) {
@@ -123,44 +123,35 @@ void (function () {
             message.textContent = "";
             updateCount();
         }
-        all.addEventListener("click", () => selectWhere(() => true));
-        none.addEventListener("click", () => selectWhere(() => false));
+        toggleAll.addEventListener("click", () => {
+            const allSelected = Array.from(boxes.values()).every(box => box.checked);
+            selectWhere(() => !allSelected);
+        });
 
-        // 各条件ボタンはチェック状態を置換する。複数条件のANDではない。
-        function makeThreshold(label, placeholder, suffix, predicate, prefix = "") {
-            const row = element("div", null, "display:flex;gap:8px;align-items:center;margin:8px 0");
-            const input = element("input");
-            input.type = "number";
-            input.min = "0";
-            input.step = "1";
-            input.inputMode = "numeric";
-            input.placeholder = placeholder;
-            input.setAttribute("aria-label", label);
-            input.style.cssText = "width:82px;min-width:0;padding:9px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:16px sans-serif;background:#fff;color:#111";
-            const button = makeButton(prefix + suffix, false);
-            button.style.flex = "1";
-            input.addEventListener("input", () => {
-                button.textContent = prefix + input.value + suffix;
-            });
-            button.addEventListener("click", () => {
-                const value = Number(input.value);
-                if (!input.value.trim() || !Number.isSafeInteger(value) || value < 0) {
-                    message.textContent = label + "に0以上の整数を入力してください。";
-                    input.focus();
-                    return;
-                }
-                selectWhere(cast => predicate(cast, value));
-            });
-            row.append(input, button);
-            return row;
+        const rankFilter = element("div", null, "display:flex;gap:8px;align-items:center;margin:8px 0");
+        const rankSelect = element("select");
+        rankSelect.setAttribute("aria-label", "キャストランクの下限");
+        rankSelect.style.cssText = "width:82px;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
+        for (const value of [1, 10, 20, 30]) {
+            const option = element("option", String(value));
+            option.value = String(value);
+            rankSelect.appendChild(option);
         }
-        const winsFilter = makeThreshold("勝利数の下限", "例:100", "勝以上のみ",
-            (cast, value) => Number.isFinite(cast.wins) && cast.wins >= value);
-        const rankFilter = makeThreshold("キャストランクの下限", "例:10", "以上のみ",
-            (cast, value) => cast.rank !== null && cast.rank >= value, "CR");
-        const note = element("div", "条件ボタンは該当キャストだけにチェックを付け直します。", "font-size:12px;color:#555;margin-top:8px");
+        rankSelect.value = "1";
+        const rankButton = makeButton("CR1以上のみ", false);
+        rankButton.style.flex = "1";
+        rankSelect.addEventListener("change", () => {
+            rankButton.textContent = "CR" + rankSelect.value + "以上のみ";
+        });
+        rankButton.addEventListener("click", () => {
+            const value = Number(rankSelect.value);
+            selectWhere(cast => cast.rank !== null && cast.rank >= value);
+        });
+        rankFilter.append(rankSelect, rankButton);
+
+        const note = element("div", "", "font-size:12px;color:#555;margin-top:8px");
         if (casts.some(cast => cast.rank === null)) {
-            note.textContent += " CRが[不明]のキャストはランク条件から除外されます。";
+            note.textContent = "CRが[不明]のキャストはランク条件から除外されます。";
         }
         const footer = element("div", null, "display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:-14px;padding:12px 0 0;background:#fff");
         const cancel = makeButton("キャンセル", false);
@@ -196,7 +187,7 @@ void (function () {
             overlay.remove();
             launcher.focus();
         }
-        panel.append(title, help, toolbar, winsFilter, rankFilter, message, status, list, note, footer);
+        panel.append(title, help, toolbar, rankFilter, message, status, list, note, footer);
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
         document.body.style.overflow = "hidden";
