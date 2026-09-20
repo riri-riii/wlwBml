@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const sha = process.env.RELEASE_SHA;
@@ -16,6 +16,10 @@ writeFileSync("_site/version.json", JSON.stringify({ sha }, null, 2) + "\n");
 writeFileSync("_site/.nojekyll", "");
 writeFileSync("_site/bookmarklet-v2.txt", bookmarklet);
 writeFileSync("_site/bookmarklet-legacy.txt", readFileSync("bookmarklet.txt"));
+mkdirSync("_site/assets", { recursive: true });
+for (const file of ["cast-list_01.webp", "acquisition_01.webp", "cast-filter_01.webp"]) {
+    copyFileSync("assets/" + file, "_site/assets/" + file);
+}
 const escape = value => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 writeFileSync("_site/index.html", `<!doctype html>
 <html lang="ja">
@@ -47,6 +51,9 @@ ol{list-style:none;counter-reset:step;padding:0;margin:0}
 li{counter-increment:step;display:flex;align-items:center;gap:12px;background:#f5f6f8;border-radius:8px;padding:9px 10px;margin-bottom:10px;min-height:50px}
 li::before{content:counter(step);display:grid;place-items:center;flex:0 0 36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;font-size:18px;font-weight:700}
 li:last-child{margin-bottom:0}
+.step-content{min-width:0;flex:1}
+.step-image{display:block;width:100%;max-width:400px;height:auto;margin:12px auto 0;border:1px solid var(--border);border-radius:8px}
+li:has(.step-image){align-items:flex-start}
 .note{margin:18px 0 0;color:var(--muted);font-size:13px;line-height:1.7}
 @media(max-width:500px){h1{font-size:22px}h2{font-size:18px}}
 @media(min-width:700px){.card{padding:20px}.desktop-register{display:block}}
@@ -67,9 +74,9 @@ li:last-child{margin-bottom:0}
 <ol>
 <li>コードをコピー</li>
 <li>ブックマークのURL欄に貼り付け</li>
-<li>Wonderland.NETのキャスト一覧画面で実行</li>
-<li>Wonderland.NETの任意のキャスト詳細画面でもう一度実行</li>
-<li>ページ下部にキャストの勝率情報が表示されます<br>右下の「キャスト選択」ボタンから表示するキャストを絞り込みできます</li>
+<li><div class="step-content">Wonderland.NETのキャスト一覧画面で実行<img class="step-image" src="assets/cast-list_01.webp" alt="マイキャスト一覧画面のファイタータブ" width="800" height="1239" loading="lazy"></div></li>
+<li><div class="step-content">Wonderland.NETの任意のキャスト詳細画面でもう一度実行<img class="step-image" src="assets/acquisition_01.webp" alt="キャスト詳細画面でブックマークレットを実行し、取得範囲を選択する画面" width="800" height="1239" loading="lazy"></div></li>
+<li><div class="step-content">ページ下部にキャストの勝率情報が表示されます<br>右下の「キャスト選択」ボタンから表示するキャストを絞り込みできます<img class="step-image" src="assets/cast-filter_01.webp" alt="勝率表示後にキャストを絞り込むキャスト選択画面" width="799" height="1239" loading="lazy"></div></li>
 </ol>
 <p class="note">マイキャスト一覧・詳細ページで利用できます。</p>
 </section>
