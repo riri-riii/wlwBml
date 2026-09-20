@@ -17,7 +17,7 @@ writeFileSync("_site/.nojekyll", "");
 writeFileSync("_site/bookmarklet-v2.txt", bookmarklet);
 writeFileSync("_site/bookmarklet-legacy.txt", readFileSync("bookmarklet.txt"));
 mkdirSync("_site/assets", { recursive: true });
-for (const file of ["cast-list_01.webp", "acquisition_01.webp", "cast-filter_01.webp"]) {
+for (const file of ["cast-list_01.webp", "acquisition_01.webp", "bulk-acquisition_01.png", "win-rate-result_01.png", "cast-filter_01.webp"]) {
     copyFileSync("assets/" + file, "_site/assets/" + file);
 }
 const escape = value => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
@@ -76,7 +76,9 @@ li:has(.step-image){align-items:flex-start}
 <li>ブックマークのURL欄に貼り付け</li>
 <li><div class="step-content">Wonderland.NETのキャスト一覧画面で実行<img class="step-image" src="assets/cast-list_01.webp" alt="マイキャスト一覧画面のファイタータブ" width="800" height="1239" loading="lazy"></div></li>
 <li><div class="step-content">Wonderland.NETの任意のキャスト詳細画面でもう一度実行<img class="step-image" src="assets/acquisition_01.webp" alt="キャスト詳細画面でブックマークレットを実行し、取得範囲を選択する画面" width="800" height="1239" loading="lazy"></div></li>
-<li><div class="step-content">ページ下部にキャストの勝率情報が表示されます<br>右下の「キャスト選択」ボタンから表示するキャストを絞り込みできます<img class="step-image" src="assets/cast-filter_01.webp" alt="勝率表示後にキャストを絞り込むキャスト選択画面" width="799" height="1239" loading="lazy"></div></li>
+<li><div class="step-content">勝率を一括取得している間は、右上に取得件数と取得中のキャスト名が表示されます<img class="step-image" src="assets/bulk-acquisition_01.png" alt="勝率一括取得中に、右上へ全キャスト取得の進捗と取得中のキャスト名が表示されている画面" width="799" height="1240" loading="lazy"></div></li>
+<li><div class="step-content">取得が完了すると、ページ下部にキャストの勝率情報が表示されます<img class="step-image" src="assets/win-rate-result_01.png" alt="勝率取得直後に、全国対戦プレイデータの下部へ全キャスト勝率とキャスト別勝率が追加された画面" width="800" height="1241" loading="lazy"></div></li>
+<li><div class="step-content">右下の「キャスト選択」ボタンから表示するキャストを絞り込みできます<img class="step-image" src="assets/cast-filter_01.webp" alt="勝率表示後にキャストを絞り込むキャスト選択画面" width="799" height="1239" loading="lazy"></div></li>
 </ol>
 <p class="note">マイキャスト一覧・詳細ページで利用できます。</p>
 </section>
