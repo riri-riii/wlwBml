@@ -1,5 +1,5 @@
 /*
- * WLWキャスト表示選択_03
+ * WLWキャスト表示選択_04
  * キャスト別勝率の表示行を選択する。初期表示はCR1以上のみ。
  */
 void (function () {
@@ -93,7 +93,7 @@ void (function () {
         const title = element("div", "キャスト選択", "font-size:18px;font-weight:700;margin-bottom:6px");
         title.id = "wlw_cast_select_title";
         const help = element("div", "表示したいキャストにチェックを入れ、OKで反映します。", "margin-bottom:10px");
-        const toolbar = element("div", null, "display:flex;gap:8px;margin-bottom:10px");
+        const toolbar = element("div", null, "display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:8px;margin-bottom:10px");
         const toggleAll = makeButton("全選択", false);
         toolbar.append(toggleAll);
         const status = element("div", "", "margin:6px 0;font-size:13px");
@@ -110,6 +110,7 @@ void (function () {
             const label = element("label", null,
                 "display:flex;align-items:center;gap:10px;padding:9px 10px;min-height:44px;" +
                 "box-sizing:border-box;border-bottom:1px solid #eee;cursor:pointer;color:#111;background:#fff");
+            label.className = "wlw-cast-row";
             const input = element("input");
             input.type = "checkbox";
             input.value = cast.id;
@@ -145,12 +146,11 @@ void (function () {
             selectWhere(() => !allSelected);
         });
 
-        const rankFilter = element("div", null, "display:flex;gap:8px;align-items:center;margin:8px 0");
         const rankSelect = element("select");
         rankSelect.setAttribute("aria-label", "キャストランクの下限");
         rankSelect.style.cssText = "width:120px;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
         for (const value of ["custom", "1", "10", "20", "30"]) {
-            const option = element("option", value === "custom" ? "カスタム" : value);
+            const option = element("option", value === "custom" ? "カスタム" : value === "30" ? "EX00以上" : "CR" + value + "以上");
             option.value = String(value);
             rankSelect.appendChild(option);
         }
@@ -170,7 +170,7 @@ void (function () {
             updateCount();
         }
         rankSelect.addEventListener("change", () => filterList(true));
-        rankFilter.append(rankSelect);
+        toolbar.append(rankSelect);
         filterList(false);
 
         const note = element("div", "", "font-size:12px;color:#555;margin-top:8px");
@@ -198,8 +198,37 @@ void (function () {
             overlay.remove();
             launcher.focus();
         }
-        panel.append(title, help, toolbar, rankFilter, message, status, list, note, footer);
-        overlay.appendChild(panel);
+        panel.append(title, help, toolbar, message, status, list, note, footer);
+        const styles = element("style", `
+            #${UI_ID} .wlw-cast-row {
+                display:flex!important;flex-direction:row!important;align-items:center!important;
+                justify-content:flex-start!important;gap:10px!important;
+                position:static!important;float:none!important;box-sizing:border-box!important;
+                width:100%!important;max-width:none!important;height:auto!important;min-height:44px!important;
+                margin:0!important;padding:9px 10px!important;border:0!important;
+                background:#fff!important;box-shadow:none!important;text-align:left!important;
+            }
+            #${UI_ID} .wlw-cast-row span {
+                display:block!important;position:static!important;float:none!important;
+                width:auto!important;height:auto!important;min-width:0!important;
+                margin:0!important;padding:0!important;border:0!important;
+                background:none!important;box-shadow:none!important;text-align:left!important;
+                line-height:1.5!important;white-space:normal!important;
+            }
+            #${UI_ID} .wlw-cast-row input[type="checkbox"] {
+                appearance:auto!important;-webkit-appearance:checkbox!important;
+                display:block!important;position:static!important;float:none!important;
+                width:20px!important;height:20px!important;min-width:20px!important;
+                margin:0!important;padding:0!important;flex:0 0 20px!important;
+                opacity:1!important;transform:none!important;box-shadow:none!important;
+            }
+            #${UI_ID} .wlw-cast-row::before, #${UI_ID} .wlw-cast-row::after,
+            #${UI_ID} .wlw-cast-row span::before, #${UI_ID} .wlw-cast-row span::after,
+            #${UI_ID} .wlw-cast-row input::before, #${UI_ID} .wlw-cast-row input::after {
+                content:none!important;display:none!important;
+            }
+        `);
+        overlay.append(styles, panel);
         document.body.appendChild(overlay);
         document.body.style.overflow = "hidden";
         updateCount();
