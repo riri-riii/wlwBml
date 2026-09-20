@@ -149,8 +149,8 @@ void (function () {
         const rankSelect = element("select");
         rankSelect.setAttribute("aria-label", "キャストランクの下限");
         rankSelect.style.cssText = "width:120px;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
-        for (const value of ["custom", "1", "10", "20", "30"]) {
-            const option = element("option", value === "custom" ? "カスタム" : value === "30" ? "EX00以上" : "CR" + value + "以上");
+        for (const value of ["custom", "1", "10", "20", "30", "40"]) {
+            const option = element("option", value === "custom" ? "カスタム" : value === "30" ? "EX00以上" : value === "40" ? "EX10以上" : "CR" + value + "以上");
             option.value = String(value);
             rankSelect.appendChild(option);
         }
