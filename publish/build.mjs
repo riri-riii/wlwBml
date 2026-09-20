@@ -25,7 +25,5 @@ writeFileSync("_site/index.html", `<!doctype html>
 <p>下のリンクをブックマークバーへドラッグするか、コードをコピーしてブックマークのURL欄へ登録してください。</p>
 <p><a href="${escape(bookmarklet.trim())}">WLW起動</a></p>
 <textarea readonly aria-label="ブックマークレットのコード">${escape(bookmarklet.trim())}</textarea>
-<p>旧版からの移行時だけ登録し直してください。以降の更新ではキャッシュ削除・再登録は不要です。公開処理完了後、次回起動から反映します。</p>
-<p>公開コミット: <code>${sha}</code></p>
-<p><a href="https://github.com/riri-riii/wlwBml/blob/main/PUBLISHING.md">更新・復旧手順</a> / <a href="bookmarklet-legacy.txt">従来のブックマーク</a></p>
+<p>登録後、Wonderland.NETにログインし、マイキャスト一覧またはキャスト詳細ページでブックマークを開いてください。</p>
 </html>\n`);
