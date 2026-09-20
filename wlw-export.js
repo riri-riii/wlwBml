@@ -1,5 +1,5 @@
 /*
- * WLWキャスト表示選択_02
+ * WLWキャスト表示選択_03
  * キャスト別勝率の表示行を選択する。初期表示はCR1以上のみ。
  */
 void (function () {
@@ -10,6 +10,7 @@ void (function () {
     const BUTTON_ID = "wlw_cast_select_button";
     const UI_ID = "wlw_cast_select_ui";
     let selectedIds = null;
+    let selectedRank = "1";
 
     const observer = new MutationObserver(() => {
         if (mount()) observer.disconnect();
@@ -102,6 +103,8 @@ void (function () {
         const list = element("div", null,
             "max-height:38vh;overflow:auto;overscroll-behavior:contain;border:1px solid #ddd;border-radius:6px");
         const boxes = new Map();
+        const labels = new Map();
+        let visibleCasts = casts;
 
         for (const cast of casts) {
             const label = element("label", null,
@@ -120,46 +123,55 @@ void (function () {
             label.append(input, text);
             list.appendChild(label);
             boxes.set(cast.id, input);
+            labels.set(cast.id, label);
             input.addEventListener("change", updateCount);
         }
 
         function updateCount() {
-            const count = Array.from(boxes.values()).filter(box => box.checked).length;
-            status.textContent = count + " / " + casts.length + "キャストを選択";
-            toggleAll.textContent = count === casts.length ? "全解除" : "全選択";
+            const count = visibleCasts.filter(cast => boxes.get(cast.id).checked).length;
+            status.textContent = count + " / " + visibleCasts.length + "キャストを選択";
+            toggleAll.textContent = visibleCasts.length > 0 && count === visibleCasts.length ? "全解除" : "全選択";
+            toggleAll.disabled = visibleCasts.length === 0;
         }
 
         function selectWhere(predicate) {
-            for (const cast of casts) boxes.get(cast.id).checked = predicate(cast);
+            for (const cast of visibleCasts) boxes.get(cast.id).checked = predicate(cast);
             message.textContent = "";
             updateCount();
         }
 
         toggleAll.addEventListener("click", () => {
-            const allSelected = Array.from(boxes.values()).every(box => box.checked);
+            const allSelected = visibleCasts.every(cast => boxes.get(cast.id).checked);
             selectWhere(() => !allSelected);
         });
 
         const rankFilter = element("div", null, "display:flex;gap:8px;align-items:center;margin:8px 0");
         const rankSelect = element("select");
         rankSelect.setAttribute("aria-label", "キャストランクの下限");
-        rankSelect.style.cssText = "width:82px;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
-        for (const value of [1, 10, 20, 30]) {
-            const option = element("option", String(value));
+        rankSelect.style.cssText = "width:120px;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
+        for (const value of ["custom", "1", "10", "20", "30"]) {
+            const option = element("option", value === "custom" ? "カスタム" : value);
             option.value = String(value);
             rankSelect.appendChild(option);
         }
-        rankSelect.value = "1";
-        const rankButton = makeButton("CR1以上のみ", false);
-        rankButton.style.flex = "1";
-        rankSelect.addEventListener("change", () => {
-            rankButton.textContent = "CR" + rankSelect.value + "以上のみ";
-        });
-        rankButton.addEventListener("click", () => {
-            const value = Number(rankSelect.value);
-            selectWhere(cast => cast.rank !== null && cast.rank >= value);
-        });
-        rankFilter.append(rankSelect, rankButton);
+        rankSelect.value = selectedRank;
+        function filterList(resetSelection) {
+            const custom = rankSelect.value === "custom";
+            const minimumRank = Number(rankSelect.value);
+            visibleCasts = casts.filter(cast => custom || (cast.rank !== null && cast.rank >= minimumRank));
+            const visibleIds = new Set(visibleCasts.map(cast => cast.id));
+            for (const cast of casts) {
+                const visible = visibleIds.has(cast.id);
+                if (visible) labels.get(cast.id).style.removeProperty("display");
+                else labels.get(cast.id).style.setProperty("display", "none", "important");
+                if (resetSelection) boxes.get(cast.id).checked = !custom && visible;
+            }
+            message.textContent = "";
+            updateCount();
+        }
+        rankSelect.addEventListener("change", () => filterList(true));
+        rankFilter.append(rankSelect);
+        filterList(false);
 
         const note = element("div", "", "font-size:12px;color:#555;margin-top:8px");
         if (casts.some(cast => cast.rank === null)) {
@@ -170,7 +182,8 @@ void (function () {
         const ok = makeButton("OK", true);
         footer.append(cancel, ok);
         ok.addEventListener("click", () => {
-            selectedIds = new Set(casts.filter(cast => boxes.get(cast.id).checked).map(cast => cast.id));
+            selectedRank = rankSelect.value;
+            selectedIds = new Set(visibleCasts.filter(cast => boxes.get(cast.id).checked).map(cast => cast.id));
             applySelection(casts);
             close();
         });
