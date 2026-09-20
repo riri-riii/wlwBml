@@ -60,14 +60,15 @@ li:last-child{margin-bottom:0}
 <textarea id="bookmarklet-code" readonly spellcheck="false" aria-label="登録コード">${escape(bookmarklet.trim())}</textarea>
 <button id="copy-code" type="button">登録コードをコピー</button>
 <p id="copy-status" class="copy-status" role="status" aria-live="polite"></p>
-<p class="desktop-register">PCでは<a href="${escape(bookmarklet.trim())}" draggable="true">WLW起動</a>をブックマークバーへドラッグして登録できます。</p>
+<p class="desktop-register">PCでは<a href="${escape(bookmarklet.trim())}" draggable="true">WLW勝率BML</a>をブックマークバーへドラッグして登録できます。</p>
 </section>
 <section class="card" aria-labelledby="usage-title">
 <h2 id="usage-title">使い方</h2>
 <ol>
 <li>コードをコピー</li>
 <li>ブックマークのURL欄に貼り付け</li>
-<li>Wonderland.NETで実行</li>
+<li>Wonderland.NETのキャスト一覧画面で実行</li>
+<li>Wonderland.NETの任意のキャスト詳細画面でもう一度実行</li>
 </ol>
 <p class="note">マイキャスト一覧・詳細ページで利用できます。</p>
 </section>
