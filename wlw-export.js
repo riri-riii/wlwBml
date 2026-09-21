@@ -175,7 +175,7 @@ void (function () {
 
         const note = element("div", "", "font-size:12px;color:#555;margin-top:8px");
         if (casts.some(cast => cast.rank === null)) {
-            note.textContent = "CRが[不明]のキャストはランク条件から除外されます。";
+            note.textContent = "";
         }
         const footer = element("div", null, "display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:-14px;padding:12px 0 0;background:#fff");
         const cancel = makeButton("キャンセル", false);
