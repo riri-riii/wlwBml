@@ -6,7 +6,6 @@
 void (async function () {
     if (window.__wlwLoaderRunning || window.__wlwBulkRunning) return;
 
-    const CORE_URL = "https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@a9a8ee750f0f0c55a82866976a353ed77019cb4e/wlw-bookmarklet.js";
     const FALLBACK_BASE = "https://cdn.jsdelivr.net/gh/riri-riii/wlwBml@main/";
     const STORAGE_KEY = "wlw_bookmarklet_05";
     const currentScriptUrl = document.currentScript?.src || "";
@@ -121,7 +120,7 @@ void (async function () {
 
     async function runFull() {
         installMessageFilter();
-        await loadScript(CORE_URL, "WLWブックマークレット本体の読み込みに失敗しました。");
+        await loadScript(baseUrl + "wlw-core.js", "WLWブックマークレット本体の読み込みに失敗しました。");
         await waitForFinish();
     }
 

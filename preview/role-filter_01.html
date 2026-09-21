@@ -1,9 +1,29 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>キャスト絞り込み確認</title><body><div id="wlw-role-demo" class="viz-dotted-background">
+<style>
+#wlw-role-demo{padding:12px;font:14px/1.5 sans-serif}
+#wlw-role-demo .sample{color:light-dark(#555,#bbb);margin-bottom:8px}
+#wlw-role-demo #wlw_custom{display:none}
+#wlw_cast_select_ui{position:relative!important;inset:auto!important;background:transparent!important;padding:0!important}
+#wlw_cast_select_ui [role="dialog"]{max-height:none!important;overflow:visible!important}
+#wlw_cast_select_ui [role="dialog"] > div{max-height:none!important}
+#wlw_cast_select_button{position:static!important;margin-top:8px}
+</style>
+<div class="sample">サンプルデータ</div>
+<div id="wlw_custom">
+<div data-wlw-cast-id="0" data-wlw-cast-name="サンドリヨン" data-wlw-rank="36" data-wlw-role="0" data-wlw-wins="264"></div>
+<div data-wlw-cast-id="32" data-wlw-cast-name="アシェンプテル" data-wlw-rank="20" data-wlw-role="1" data-wlw-wins="100"></div>
+<div data-wlw-cast-id="2" data-wlw-cast-name="ピーター・ザ・キッド" data-wlw-rank="25" data-wlw-role="2" data-wlw-wins="100"></div>
+<div data-wlw-cast-id="3" data-wlw-cast-name="アタッカー例・CR19" data-wlw-rank="19" data-wlw-role="1" data-wlw-wins="100"></div>
+<div data-wlw-cast-id="4" data-wlw-cast-name="アタッカー例・CR40" data-wlw-rank="40" data-wlw-role="1" data-wlw-wins="100"></div>
+</div>
+</div>
+<script>
 /*
  * WLWキャスト表示選択_04
  * キャスト別勝率の表示行を選択する。初期表示はCR1以上のみ。
  */
 void (function () {
-    if (location.hostname !== "wonderland-wars.net" || location.pathname !== "/castdetail.html") return;
+
     if (window.__wlwCastSelectionLoaded) return;
     window.__wlwCastSelectionLoaded = true;
 
@@ -51,7 +71,7 @@ void (function () {
         button.setAttribute("aria-haspopup", "dialog");
         button.style.cssText += ";position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:2147483646;box-shadow:0 2px 8px #0003";
         button.addEventListener("click", () => openPanel(button));
-        document.body.appendChild(button);
+        document.getElementById("wlw-role-demo").appendChild(button);
         return true;
     }
 
@@ -248,9 +268,12 @@ void (function () {
             }
         `);
         overlay.append(styles, panel);
-        document.body.appendChild(overlay);
-        document.body.style.overflow = "hidden";
+        document.getElementById("wlw-role-demo").appendChild(overlay);
+
         updateCount();
         panel.focus();
     }
 })();
+document.getElementById("wlw_cast_select_button").click();
+</script>
+</body></html>
