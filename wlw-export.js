@@ -11,6 +11,7 @@ void (function () {
     const UI_ID = "wlw_cast_select_ui";
     let selectedIds = null;
     let selectedRank = "1";
+    let selectedRole = "all";
 
     const observer = new MutationObserver(() => {
         if (mount()) observer.disconnect();
@@ -26,6 +27,8 @@ void (function () {
                 id: row.dataset.wlwCastId,
                 name: row.dataset.wlwCastName || row.dataset.wlwCastId,
                 wins: Number(row.dataset.wlwWins),
+                losses: Number(row.dataset.wlwLosses),
+                role: /^[012]$/.test(row.dataset.wlwRole || "") ? row.dataset.wlwRole : null,
                 rank: Number.isInteger(rank) && rank >= 0 ? rank : null
             };
         });
@@ -57,6 +60,17 @@ void (function () {
         for (const cast of casts) {
             if (selectedIds.has(cast.id)) cast.row.style.removeProperty("display");
             else cast.row.style.setProperty("display", "none", "important");
+        }
+        const value = document.querySelector("#wlw_visible_summary .block_playdata_01_text");
+        if (value) {
+            const visible = casts.filter(cast => selectedIds.has(cast.id));
+            const wins = visible.reduce((sum, cast) => sum + cast.wins, 0);
+            const losses = visible.reduce((sum, cast) => sum + cast.losses, 0);
+            const games = wins + losses;
+            const rate = games > 0 ? (Math.round(wins / games * 1000) / 10) + "%" : "—";
+            value.textContent = rate + " ";
+            value.appendChild(element("span", "(" + wins + "勝" + losses + "敗)"));
+            value.lastChild.className = "font_small";
         }
     }
 
@@ -148,17 +162,33 @@ void (function () {
 
         const rankSelect = element("select");
         rankSelect.setAttribute("aria-label", "キャストランクの下限");
-        rankSelect.style.cssText = "width:120px;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
+        rankSelect.style.cssText = "width:100%;min-width:0;padding:7px 6px;box-sizing:border-box;border:1px solid #aaa;border-radius:6px;font:14px sans-serif;background:#fff;color:#111";
         for (const value of ["custom", "1", "10", "20", "30", "40"]) {
             const option = element("option", value === "custom" ? "カスタム" : value === "30" ? "EX00以上" : value === "40" ? "EX10以上" : "CR" + value + "以上");
             option.value = String(value);
             rankSelect.appendChild(option);
         }
         rankSelect.value = selectedRank;
+        const roleSelect = element("select");
+        roleSelect.setAttribute("aria-label", "キャストのロール");
+        roleSelect.style.cssText = rankSelect.style.cssText;
+        for (const [value, name] of [["all", "全ロール"], ["0", "ファイター"], ["1", "アタッカー"], ["2", "サポーター"]]) {
+            const option = element("option", name);
+            option.value = value;
+            roleSelect.appendChild(option);
+        }
+        roleSelect.value = selectedRole;
+        const filters = element("div", null, "display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px");
+        filters.append(rankSelect, roleSelect);
+        const empty = element("div", "", "padding:10px;font-size:13px");
+        list.appendChild(empty);
         function filterList(resetSelection) {
             const custom = rankSelect.value === "custom";
             const minimumRank = Number(rankSelect.value);
-            visibleCasts = casts.filter(cast => custom || (cast.rank !== null && cast.rank >= minimumRank));
+            visibleCasts = casts.filter(cast =>
+                (custom || (cast.rank !== null && cast.rank >= minimumRank)) &&
+                (roleSelect.value === "all" || cast.role === roleSelect.value));
+            empty.textContent = visibleCasts.length ? "" : "該当するキャストがありません";
             const visibleIds = new Set(visibleCasts.map(cast => cast.id));
             for (const cast of casts) {
                 const visible = visibleIds.has(cast.id);
@@ -170,12 +200,12 @@ void (function () {
             updateCount();
         }
         rankSelect.addEventListener("change", () => filterList(true));
-        toolbar.append(rankSelect);
+        roleSelect.addEventListener("change", () => filterList(true));
         filterList(false);
 
         const note = element("div", "", "font-size:12px;color:#555;margin-top:8px");
-        if (casts.some(cast => cast.rank === null)) {
-            note.textContent = "";
+        if (casts.some(cast => cast.role === null)) {
+            note.textContent = "ロール未取得のキャストがあります。「全キャスト取得」を実行してください。";
         }
         const footer = element("div", null, "display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:-14px;padding:12px 0 0;background:#fff");
         const cancel = makeButton("キャンセル", false);
@@ -183,6 +213,7 @@ void (function () {
         footer.append(cancel, ok);
         ok.addEventListener("click", () => {
             selectedRank = rankSelect.value;
+            selectedRole = roleSelect.value;
             selectedIds = new Set(visibleCasts.filter(cast => boxes.get(cast.id).checked).map(cast => cast.id));
             applySelection(casts);
             close();
@@ -198,7 +229,7 @@ void (function () {
             overlay.remove();
             launcher.focus();
         }
-        panel.append(title, help, toolbar, message, status, list, note, footer);
+        panel.append(title, help, toolbar, filters, message, status, list, note, footer);
         const styles = element("style", `
             #${UI_ID} .wlw-cast-row {
                 display:flex!important;flex-direction:row!important;align-items:center!important;

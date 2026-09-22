@@ -30,10 +30,13 @@ void (function () {
 
         const currentData = readCastData(document);
         const currentRank = readCastRank(document);
+        const currentRole = readCastRole(document);
 
         state.ranks ||= {};
+        state.roles ||= {};
         const baseline = updateCastState(state, currentId, currentData);
         state.ranks[currentId] = currentRank;
+        state.roles[currentId] = currentRole;
         state.roster = roster;
         saveState(state);
 
@@ -108,6 +111,13 @@ void (function () {
         const wr = wc + lc !== 0 ? Math.round(wc / (wc + lc) * 1000) / 10 : 0;
         const kr = wdc !== 0 ? Math.round(crc / wdc * 100) / 100 : 0;
         return [Date.now(), ur, wc, lc, wr, crc, wdc, kr, tp, wp, lp, tn, wn, ln];
+    }
+
+
+    function readCastRole(source) {
+        const src = source.querySelector(".data_cast_roll img")?.getAttribute("src") || "";
+        const match = src.match(/(?:^|\/)icon_role_([012])\.png(?:[?#]|$)/);
+        return match ? Number(match[1]) : null;
     }
 
     function readCastRank(source) {
@@ -207,6 +217,9 @@ void (function () {
 
         insert(6, "全キャスト勝率", allRate + '% <span class="font_small">(' + allWins + "勝" + allLosses + "敗)</span>");
 
+        const visibleSummary = insert(6, "表示中キャスト勝率", "—");
+        visibleSummary.id = "wlw_visible_summary";
+
         for (let i = 0; i < roster.ids.length; i++) {
             const id = roster.ids[i];
             const row = insert(
@@ -215,8 +228,10 @@ void (function () {
                 rates[id] + '% <span class="font_small">(' + wins[id] + "勝" + losses[id] + "敗)</span>"
             );
             row.dataset.wlwCastId = id;
+            row.dataset.wlwRole = state.roles?.[id] == null ? "" : String(state.roles[id]);
             row.dataset.wlwCastName = roster.names[i];
             row.dataset.wlwWins = String(wins[id]);
+            row.dataset.wlwLosses = String(losses[id]);
             row.dataset.wlwRank = state.ranks?.[id] == null ? "" : String(state.ranks[id]);
         }
 
