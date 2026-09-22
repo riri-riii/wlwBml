@@ -27,6 +27,7 @@ void (function () {
                 id: row.dataset.wlwCastId,
                 name: row.dataset.wlwCastName || row.dataset.wlwCastId,
                 wins: Number(row.dataset.wlwWins),
+                losses: Number(row.dataset.wlwLosses),
                 role: /^[012]$/.test(row.dataset.wlwRole || "") ? row.dataset.wlwRole : null,
                 rank: Number.isInteger(rank) && rank >= 0 ? rank : null
             };
@@ -59,6 +60,17 @@ void (function () {
         for (const cast of casts) {
             if (selectedIds.has(cast.id)) cast.row.style.removeProperty("display");
             else cast.row.style.setProperty("display", "none", "important");
+        }
+        const value = document.querySelector("#wlw_visible_summary .block_playdata_01_text");
+        if (value) {
+            const visible = casts.filter(cast => selectedIds.has(cast.id));
+            const wins = visible.reduce((sum, cast) => sum + cast.wins, 0);
+            const losses = visible.reduce((sum, cast) => sum + cast.losses, 0);
+            const games = wins + losses;
+            const rate = games > 0 ? (Math.round(wins / games * 1000) / 10) + "%" : "—";
+            value.textContent = rate + " ";
+            value.appendChild(element("span", "(" + wins + "勝" + losses + "敗)"));
+            value.lastChild.className = "font_small";
         }
     }
 

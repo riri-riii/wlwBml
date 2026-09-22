@@ -217,6 +217,9 @@ void (function () {
 
         insert(6, "全キャスト勝率", allRate + '% <span class="font_small">(' + allWins + "勝" + allLosses + "敗)</span>");
 
+        const visibleSummary = insert(6, "表示中キャスト勝率", "—");
+        visibleSummary.id = "wlw_visible_summary";
+
         for (let i = 0; i < roster.ids.length; i++) {
             const id = roster.ids[i];
             const row = insert(
@@ -228,6 +231,7 @@ void (function () {
             row.dataset.wlwRole = state.roles?.[id] == null ? "" : String(state.roles[id]);
             row.dataset.wlwCastName = roster.names[i];
             row.dataset.wlwWins = String(wins[id]);
+            row.dataset.wlwLosses = String(losses[id]);
             row.dataset.wlwRank = state.ranks?.[id] == null ? "" : String(state.ranks[id]);
         }
 
